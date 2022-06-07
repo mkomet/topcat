@@ -1,4 +1,5 @@
 import datetime
+
 from topcat import search_availability
 from topcat.request import BookingMethod
 

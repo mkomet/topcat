@@ -1,9 +1,9 @@
 import datetime
 import enum
 from typing import List, Optional
+
 import requests
 from pydantic import BaseModel, Extra
-
 
 _ONTOPO_URL = "https://ontopo.co.il"
 _ONTOPO_AVAILABILITY_API = f"{_ONTOPO_URL}/api/availability/searchAvailability"
@@ -15,11 +15,19 @@ class BookingMethod(enum.Enum):
 
 
 class BookingOption(BaseModel):
-    pass
+    time: str
+    method: BookingMethod
+    text: str
+    id: Optional[str]
+    score: Optional[int]
 
 
 class VenueArea(BaseModel):
-    pass
+    id: str
+    icon: str
+    text: str
+    options: List[BookingOption]
+    score: Optional[int]
 
 
 class VenueAvailability(BaseModel, extra=Extra.ignore):
@@ -50,4 +58,3 @@ def search_availability(
         json=payload,
     )
     return VenueAvailability(**response.json())
-

@@ -8,6 +8,26 @@ from pydantic import BaseModel, Extra
 _ONTOPO_URL = "https://ontopo.co.il"
 _ONTOPO_AVAILABILITY_API = f"{_ONTOPO_URL}/api/availability/searchAvailability"
 
+_MAIL_FORMAT = """
+<!DOCTYPE html>
+<html>
+<body>
+{areas}
+</body>
+</html>
+"""
+_BOOKING_AREA_FORMAT = """
+<p class="title"><b>
+{area}
+</b></p>
+{options}
+"""
+_BOOKING_OPTION_FORMAT = """
+<p class="story">
+{option}
+</p>
+"""
+
 
 class BookingMethod(enum.Enum):
     SEAT = "seat"
@@ -17,9 +37,14 @@ class BookingMethod(enum.Enum):
 class BookingOption(BaseModel):
     time: str
     method: BookingMethod
-    text: str
+    text: Optional[str]
     id: Optional[str]
     score: Optional[int]
+
+    def to_html(self) -> str:
+        return _BOOKING_OPTION_FORMAT.format(
+            option=f"{self.time} method={self.method} score={self.score}",
+        )
 
 
 class VenueArea(BaseModel):
@@ -29,11 +54,33 @@ class VenueArea(BaseModel):
     options: List[BookingOption]
     score: Optional[int]
 
+    def to_html(self) -> str:
+        return _BOOKING_AREA_FORMAT.format(
+            area=f"{self.icon} score={self.score}",
+            options="\n".join(
+                option.to_html()
+                for option in self.options
+            ),
+        )
+
 
 class VenueAvailability(BaseModel, extra=Extra.ignore):
     recommended: List[BookingOption]
     method: BookingMethod
     areas: Optional[List[VenueArea]]
+
+    def to_html(self) -> str:
+        if self.areas is None:
+            return _MAIL_FORMAT.format(
+                areas="No seating available currently",
+            )
+
+        return _MAIL_FORMAT.format(
+            areas="\n".join(
+                area.to_html()
+                for area in self.areas
+            ),
+        )
 
 
 def search_availability(

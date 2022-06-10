@@ -32,6 +32,8 @@ _BOOKING_OPTION_FORMAT = """
 class BookingMethod(enum.Enum):
     SEAT = "seat"
     DISABLED = "disabled"
+    PHONE = "phone"
+    STANDBY = "standby"
 
 
 class BookingOption(BaseModel):

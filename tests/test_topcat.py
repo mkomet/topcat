@@ -17,6 +17,7 @@ def test_availability():
     availability = search_availability(2, next_week, "texasbbqtlv")
     assert availability.method == BookingMethod.SEAT
     _check_availability_mail(availability)
+    assert False
 
 
 def test_no_availability():

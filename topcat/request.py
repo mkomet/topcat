@@ -8,13 +8,8 @@ from pydantic import BaseModel, Extra
 _ONTOPO_URL = "https://ontopo.co.il"
 _ONTOPO_AVAILABILITY_API = f"{_ONTOPO_URL}/api/availability/searchAvailability"
 
-_MAIL_FORMAT = """
-<!DOCTYPE html>
-<html>
-<body>
+_AVAILABLITY_FORMAT = """
 {areas}
-</body>
-</html>
 """
 _BOOKING_AREA_FORMAT = """
 <p class="title"><b>
@@ -32,6 +27,7 @@ _BOOKING_OPTION_FORMAT = """
 class BookingMethod(enum.Enum):
     SEAT = "seat"
     DISABLED = "disabled"
+    PHONE = "phone"
 
 
 class BookingOption(BaseModel):
@@ -57,10 +53,7 @@ class VenueArea(BaseModel):
     def to_html(self) -> str:
         return _BOOKING_AREA_FORMAT.format(
             area=f"{self.icon} score={self.score}",
-            options="\n".join(
-                option.to_html()
-                for option in self.options
-            ),
+            options="\n".join(option.to_html() for option in self.options),
         )
 
 
@@ -71,15 +64,12 @@ class VenueAvailability(BaseModel, extra=Extra.ignore):
 
     def to_html(self) -> str:
         if self.areas is None:
-            return _MAIL_FORMAT.format(
+            return _AVAILABLITY_FORMAT.format(
                 areas="No seating available currently",
             )
 
-        return _MAIL_FORMAT.format(
-            areas="\n".join(
-                area.to_html()
-                for area in self.areas
-            ),
+        return _AVAILABLITY_FORMAT.format(
+            areas="\n".join(area.to_html() for area in self.areas),
         )
 
 

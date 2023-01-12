@@ -24,14 +24,14 @@ and send an email with updates every `interval` minutes.
     args.add_argument(
         "-i",
         "--interval",
-        default=10,
+        default=2,
         help="Interval for checking availability (in minutes)",
         type=int,
     )
     args.add_argument(
         "-s",
         "--table-size",
-        default=4,
+        default=2,
         help="Size of table (# of people)",
     )
 

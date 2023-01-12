@@ -5,8 +5,8 @@ from typing import List, Optional
 import requests
 from pydantic import BaseModel, Extra
 
-_ONTOPO_URL = "https://ontopo.co.il"
-_ONTOPO_AVAILABILITY_API = f"{_ONTOPO_URL}/api/availability/searchAvailability"
+from topcat.const import EN_US_LOCALE, SEARCH_VENUE_SLUG, ONTOPO_AVAILABILITY_API, ONTOPO_SEARCH_VENUE_API, \
+    ONTOPO_FETCH_VENUE_API
 
 _AVAILABLITY_FORMAT = """
 {areas}
@@ -28,6 +28,7 @@ class BookingMethod(enum.Enum):
     SEAT = "seat"
     DISABLED = "disabled"
     PHONE = "phone"
+    STANDBY = "standby"
 
 
 class BookingOption(BaseModel):
@@ -41,6 +42,19 @@ class BookingOption(BaseModel):
         return _BOOKING_OPTION_FORMAT.format(
             option=f"{self.time} method={self.method} score={self.score}",
         )
+
+
+class VenueSearch(BaseModel):
+    slug: str
+    version: int
+    title: str
+    address: str
+
+
+class Venue(BaseModel):
+    title: str
+    slug: str
+    version: int
 
 
 class VenueArea(BaseModel):
@@ -73,25 +87,37 @@ class VenueAvailability(BaseModel, extra=Extra.ignore):
         )
 
 
-def search_availability(
-    table_size: int,
-    date: datetime.datetime,
-    venue: str,
-) -> VenueAvailability:
+def search_venue(venue: str) -> Venue:
+    venue_search = VenueSearch(**requests.get(ONTOPO_SEARCH_VENUE_API, params=dict(
+        slug=SEARCH_VENUE_SLUG,
+        locale=EN_US_LOCALE,
+        terms=venue
+    )).json()[0])
+
+    return Venue(**requests.get(ONTOPO_FETCH_VENUE_API, params=dict(
+        slug=venue_search.slug,
+        locale=EN_US_LOCALE,
+        version=venue_search.version
+    )).json()["pages"][0])
+
+
+def search_availability(table_size: int, date: datetime.datetime, venue: str) -> VenueAvailability:
     # Build POST body
     criteria = dict(
         date=date.strftime("%Y%m%d"),
         time=date.strftime("%H%M"),
         size=str(table_size),
     )
+
     payload = dict(
         criteria=criteria,
-        locale="en",
-        page_id=venue,
+        locale=EN_US_LOCALE,
+        slug=search_venue(venue).slug,
     )
 
     response = requests.post(
-        url=_ONTOPO_AVAILABILITY_API,
+        url=ONTOPO_AVAILABILITY_API,
         json=payload,
     )
+    # print(response.json())
     return VenueAvailability(**response.json())
